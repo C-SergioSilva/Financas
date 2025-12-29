@@ -1,0 +1,112 @@
+﻿using AutoMapper;
+using Financas.Dominio.Entidades;
+using Financas.Dominio.Interfaces;
+using Financas.Negocio.EntidadeVO;
+using Financas.Negocio.Interfaces;
+
+namespace Financas.Negocio.Negocios
+{
+    public class NegocioReceita : INegocioReceita
+    {
+        protected readonly IMapper map;
+        protected readonly IRepositorioReceita repositorio;
+        public NegocioReceita(IMapper map, IRepositorioReceita repositorio)
+        {
+            this.map = map;
+            this.repositorio = repositorio;
+        }
+
+        public async Task<ReceitaVO> AdicionarSalvar(ReceitaVO receitaVO)
+        {
+            try
+            {
+                var receitaMap = map.Map<Receita>(receitaVO);
+                var receita = await repositorio.AdicionarSalvar(receitaMap);
+                var receitaRetorno = map.Map<ReceitaVO>(receita);
+
+                return receitaRetorno;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        public async Task<ReceitaVO> AtualizarReceita(ReceitaVO receitaVO)
+        {
+            try
+            {
+                var receitaMap = map.Map<Receita>(receitaVO);
+                var receita = await repositorio.AtualizarReceita(receitaMap);
+                var receitaRetorno = map.Map<ReceitaVO>(receita);
+
+                return receitaRetorno;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        public async Task<ReceitaVO> ObterReceitaPorId(int Id)
+        {
+            try
+            {
+                var receita = await repositorio.ObterReceitaPorId(Id);
+                var receitaMap = map.Map<ReceitaVO>(receita);
+
+                return receitaMap;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        public async Task<IEnumerable<ReceitaVO>> ObterReceitasComFontesRendas()
+        {
+            try
+            {
+                var lReceita = await repositorio.ObterTodasReceitasComFontesRendas();
+
+                var receitaMap = map.Map<IEnumerable<ReceitaVO>>(lReceita);
+                return receitaMap;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        public async Task<IEnumerable<ReceitaVO>> ObterTodos()
+        {
+            try
+            {
+                var lReceita = await repositorio.ObterTodos();
+
+                var receitaMap = map.Map<IEnumerable<ReceitaVO>>(lReceita);
+                return receitaMap;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        public async Task StatusDeletado(int Id)
+        {
+            try
+            {
+                var receita = await repositorio.ObterReceitaPorId(Id);
+
+                receita.Deletado = true;
+
+                await repositorio.StatusDeletado(receita);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+    }
+}

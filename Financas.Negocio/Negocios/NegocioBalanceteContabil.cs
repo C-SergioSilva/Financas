@@ -1,0 +1,124 @@
+﻿using AutoMapper;
+using Financas.Dominio.Entidades;
+using Financas.Dominio.Interfaces;
+using Financas.Negocio.EntidadeVO;
+using Financas.Negocio.Interfaces;
+
+namespace Financas.Negocio.Negocios
+{
+    public class NegocioBalanceteContabil : INegocioBalanceteContabil
+    {
+        protected readonly IMapper map;
+        protected readonly IRepositorioBalanceteContabil repositorio;
+
+        public NegocioBalanceteContabil(IMapper map, IRepositorioBalanceteContabil repositorio)
+        {
+            this.map = map;
+            this.repositorio = repositorio;
+        }
+
+        public async Task<BalanceteContabilVO> AdicionarSalvar(BalanceteContabilVO balanceteVO)
+        {
+            try
+            {
+                var balanceteMap = map.Map<BalanceteContabil>(balanceteVO);
+                var balancete = await repositorio.AdicionarSalvar(balanceteMap);
+                var balanceteRetorno = map.Map<BalanceteContabilVO>(balancete);
+
+                return balanceteRetorno;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        public async Task<BalanceteContabilVO> AtualizarBalanceteContabil(BalanceteContabilVO balanceteVO)
+        {
+            try
+            {
+                var balanceteMap = map.Map<BalanceteContabil>(balanceteVO);
+                var balancete = await repositorio.AtualizarBalanceteContabil(balanceteMap);
+                var balanceteRetorno = map.Map<BalanceteContabilVO>(balancete);
+
+                return balanceteRetorno;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        public async Task <ResultadoCalculoBalanceteVO> ResultadoBalanceteContabil(string pInicial, string pFinal, string pPeriodicidade)
+        {
+            try
+            {
+                var resultado = await repositorio.ResultadoBalanceteContabil(pInicial, pFinal, pPeriodicidade);
+                var resultadoRetorno = map.Map<ResultadoCalculoBalanceteVO>(resultado);
+                return resultadoRetorno;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        public async Task<BalanceteContabilVO> ObterBalanceteContabilPorId(int id)
+        {
+            try
+            {
+                var balancete = await repositorio.ObterBalanceteContabilPorId(id);
+                var balanceteRetorno = map.Map<BalanceteContabilVO>(balancete);
+                return balanceteRetorno;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        public async Task<IEnumerable<BalanceteContabilVO>> ObterBalanceteContabilPorPeriodo(string pPeriodicidade)
+        {
+            try
+            {
+                var balancete = await repositorio.ObterBalanceteContabilPorPeriodo(pPeriodicidade);
+
+                var balanceteRetorno = map.Map<IEnumerable<BalanceteContabilVO>>(balancete);
+                return balanceteRetorno;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        public async Task<IEnumerable<BalanceteContabilVO>> ObterTodos()
+        {
+            try
+            {
+                var lBalancete = await repositorio.ObterTodos();
+
+                var balanceteRetorno = map.Map<IEnumerable<BalanceteContabilVO>>(lBalancete);
+                return balanceteRetorno;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        public async Task StatusDeletado(int id)
+        {
+            try
+            {
+                var balancete = await repositorio.ObterBalanceteContabilPorId(id);
+                balancete.Deletado = true;
+                await repositorio.StatusDeletado(balancete);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+    }
+}

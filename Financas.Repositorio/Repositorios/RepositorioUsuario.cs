@@ -1,0 +1,81 @@
+﻿using Financas.Dominio.Entidades;
+using Financas.Dominio.Interfaces;
+using Financas.Repositorio.Contexto;
+using Microsoft.EntityFrameworkCore;
+
+namespace Financas.Repositorio.Repositorios
+{
+    public class RepositorioUsuario : RepositorioBase<Usuario>, IRepositorioUsuario
+    {
+        public RepositorioUsuario(DbContexto contexto) : base(contexto) { }
+
+        public async Task<IEnumerable<Usuario>> ObterUsuariosComPerfil()
+        {
+            try
+            {
+                return await contexto.Usuarios.Include(u=>u.Perfil)
+                .Where(u=>!u.Deletado).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        public async Task<Usuario> ObterUsuarioPorID(int id)
+        {
+            try
+            {
+                var lUsuario = await contexto.Usuarios.Include(u => u.Perfil)
+                .Where(u => !u.Deletado && u.IdUsuario == id).FirstOrDefaultAsync();
+
+                return lUsuario;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        public async Task<Usuario> Atualizar(Usuario usuario)
+        {
+            try
+            {
+                var atualizaEntidade = await contexto.Usuarios.SingleOrDefaultAsync(e => e.IdUsuario.Equals(usuario.IdUsuario));
+
+                if (atualizaEntidade == null)
+                {
+                    return null;
+                }
+                contexto.Entry(atualizaEntidade).CurrentValues.SetValues(usuario);
+                await contexto.SaveChangesAsync();
+                return usuario;
+            }
+            catch (Exception exception)
+            {
+
+                throw new Exception(exception.Message, exception);
+
+            }
+        }
+
+        public async Task<Usuario> ObterUsuarioPorEmailSenha(string email, string senha)
+        {
+            try
+            {
+                var usuario = await contexto.Usuarios
+                .Include(u =>u.Perfil)
+                .FirstOrDefaultAsync(u => u.Email == email && u.Senha == senha && !u.Deletado);
+
+                return usuario;
+            }
+            catch (Exception exception)
+            {
+
+                throw new Exception(exception.Message, exception);
+
+            }
+        }
+    }
+}
+
