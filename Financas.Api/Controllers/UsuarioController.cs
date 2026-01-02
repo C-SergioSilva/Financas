@@ -1,9 +1,11 @@
 ﻿using Financas.Negocio.EntidadeVO;
 using Financas.Negocio.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Financas.Api.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UsuarioController : ControllerBase
@@ -20,7 +22,7 @@ namespace Financas.Api.Controllers
         {
             try
             {
-                var listaUsuario = await usuarioNegocio.ObterUsuariosComPerfil();
+                var listaUsuario = await usuarioNegocio.ObterTodos();
                 return Ok(listaUsuario);
             }
             catch (Exception ex)

@@ -3,144 +3,93 @@ using Financas.Negocio.Interfaces;
 using Financas.Negocio.Negocios;
 using Financas.Repositorio.Contexto;
 using Financas.Repositorio.Repositorios;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-
-
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// --- 1. CONFIGURAÇÃO DE AUTENTICAÇÃO (O QUE ESTAVA FALTANDO) ---
+// Importante: A 'chave' abaixo deve ser EXATAMENTE a mesma usada no seu AuthService.
 
+// 1. Busca o valor real do arquivo (Corrigindo o erro anterior)
+var secretKey = builder.Configuration["JwtSettings:Secret"];
+var chave = Encoding.UTF8.GetBytes(secretKey); // Use UTF8 para bater com o AuthService  
+
+builder.Services.AddAuthentication(x =>
+{
+    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(x =>
+{
+    x.RequireHttpsMetadata = false;
+    x.SaveToken = true;
+    x.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(chave),
+        ValidateIssuer = false,
+        ValidateAudience = false
+    };
+});
+
+// Add services to the container.
 #region [Adicionando serviços ao container]
 builder.Services.AddControllers()
-
     .AddJsonOptions(options =>
-
     {
-
-        // Ignorar campos somente leitura na serializaзгo JSON
-
         options.JsonSerializerOptions.IgnoreReadOnlyFields = true;
-
     })
-
     .AddNewtonsoftJson(op =>
-
     {
-
-        // Evitar loop de referкncia na serializaзгo
-
         op.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
-
     });
-
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-// Configurar o contexto do banco de dados
 builder.Services.AddDbContext<DbContexto>(options =>
-options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-//builder.Services.AddScoped<>();
-
-// Configurar CORS para permitir qualquer origem, mйtodo e cabeзalho
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy("AllowAll", builder =>
-//        builder.AllowAnyOrigin()
-//               .AllowAnyMethod()
-//               .AllowAnyHeader());
-//});
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddCors(options =>
-
 {
-
     options.AddPolicy("AllowAngularApp", builder =>
-
         builder.WithOrigins("http://localhost:4200")
-
                .AllowAnyMethod()
-
                .AllowAnyHeader());
-
 });
 
-
 #region [Área de configuracao dos serviços] 
-
 builder.Services.AddScoped<INegocioUsuario, NegocioUsuario>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-
 builder.Services.AddScoped<INegocioPerfil, NegocioPerfil>();
 builder.Services.AddScoped<INegocioDespesa, NegocioDespesa>();
 builder.Services.AddScoped<INegocioReceita, NegocioReceita>();
 builder.Services.AddScoped<INegocioFonteRenda, NegocioFonteRenda>();
 builder.Services.AddScoped<INegocioBalanceteContabil, NegocioBalanceteContabil>();
-
 builder.Services.AddScoped<IRepositorioUsuario, RepositorioUsuario>();
-
 builder.Services.AddScoped<IRepositorioPerfil, RepositorioPerfil>();
-
 builder.Services.AddScoped<IRepositorioDespesa, RepositorioDespesa>();
-
 builder.Services.AddScoped<IRepositorioReceita, RepositorioReceita>();
-
 builder.Services.AddScoped<IRepositorioFonteRenda, RepositorioFonteRenda>();
 builder.Services.AddScoped<IRepositorioBalanceteContabil, RepositorioBalanceteContabil>();
-
-
 #endregion
 
-// Configurar o diretуrio estбtico do SPA (se houver um frontend SPA)
-//builder.Services.AddSpaStaticFiles(diretorio =>
-//{
-//    diretorio.RootPath = "GerenciadorFinanceiro-UI"; // Exemplo de diretуrio do frontend
-//});
 #endregion
-
-#region [Configuração do HTTP Request]
-
 
 var app = builder.Build();
 
-// Configurar o CORS para usar a polнtica criada
-app.UseCors("AllowAngularApp");
+#region [Configuração do HTTP Request]
 
-// Redirecionar requisiзхes HTTP para HTTPS
+app.UseCors("AllowAngularApp");
 app.UseHttpsRedirection();
 
-// Configurar autorização (se necessário)
-app.UseAuthorization();
+// --- 2. ORDEM DOS MIDDLEWARES (AJUSTE CRUCIAL) ---
+app.UseAuthentication(); // <-- VOCÊ PRECISA ADICIONAR ESTA LINHA AQUI
+app.UseAuthorization();  // Esta já existia, mas deve vir DEPOIS da Authentication
 
-// Servir arquivos estбticos
 app.UseStaticFiles();
-//app.UseSpaStaticFiles();
-
-//Configurar o pipeline do SPA (se houver)
-//app.UseSpa(spa =>
-//{
-//    spa.Options.SourcePath = Path.Combine(Directory.GetCurrentDirectory(), "Fluxo-Financeiro/financas/front-end");
-
-//    // Se estiver em desenvolvimento, use o proxy para o servidor do SPA
-//    spa.UseProxyToSpaDevelopmentServer("http://localhost:4200"); // URL do servidor de desenvolvimento do SPA (exemplo com Angular)
-//});
-
-// Mapear os controladores da API
 app.MapControllers();
-
-// Iniciar a aplicaзгo
 app.Run();
 #endregion
-
-//var app = builder.Build();
-
-//// Configure the HTTP request pipeline.
-
-//app.UseHttpsRedirection();
-
-//app.UseAuthorization();
-
-//app.MapControllers();
-
-//app.Run();
