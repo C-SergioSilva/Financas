@@ -10,10 +10,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- 1. CONFIGURAÇÃO DE AUTENTICAÇÃO (O QUE ESTAVA FALTANDO) ---
-// Importante: A 'chave' abaixo deve ser EXATAMENTE a mesma usada no seu AuthService.
-
-// 1. Busca o valor real do arquivo (Corrigindo o erro anterior)
+// 1. Busca o valor real do arquivo
 var secretKey = builder.Configuration["JwtSettings:Secret"];
 var chave = Encoding.UTF8.GetBytes(secretKey); // Use UTF8 para bater com o AuthService  
 
@@ -86,7 +83,7 @@ app.UseCors("AllowAngularApp");
 app.UseHttpsRedirection();
 
 // --- 2. ORDEM DOS MIDDLEWARES (AJUSTE CRUCIAL) ---
-app.UseAuthentication(); // <-- VOCÊ PRECISA ADICIONAR ESTA LINHA AQUI
+app.UseAuthentication(); 
 app.UseAuthorization();  // Esta já existia, mas deve vir DEPOIS da Authentication
 
 app.UseStaticFiles();
